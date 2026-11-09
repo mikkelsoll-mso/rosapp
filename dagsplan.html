@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Dagsplan og overgange</title>
+<style>
+:root{
+  --bg:#fdfaf3; --card:#ffffff; --text:#3a362e; --muted:#8a8375;
+  --accent:#5a9b7c; --accent-dark:#3f7059; --stone:#e7e1d2;
+  --border:#e4ddcb; --warn:#d8895a; --red:#d64545; --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#20231f; --card:#2a2e28; --text:#ede8dc; --muted:#a3a08f;
+  --accent:#6fb894; --accent-dark:#4f8d6f; --stone:#3a3e36;
+  --border:#3a3e36; --warn:#e3a179; --red:#ff6b6b; color-scheme: dark; }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--text);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.wrap{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;font-weight:600;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:14px;text-transform:capitalize}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.menu-wrap{position:relative;flex:none}
+.menu-btn{
+  width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--border);
+  color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0
+}
+.menu-panel{
+  position:absolute;top:48px;right:0;z-index:20;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;width:270px;max-width:80vw;box-shadow:0 8px 24px rgba(0,0,0,.18)
+}
+.menu-item{margin-bottom:12px}
+.menu-item:last-child{margin-bottom:0}
+.menu-label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+.menu-panel select, .menu-panel input[type=text]{
+  width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:16px;margin-bottom:4px
+}
+button{
+  font-size:16px;font-weight:600;border:none;border-radius:12px;padding:12px 16px;
+  cursor:pointer;color:#fff;background:var(--accent)
+}
+button.secondary{background:transparent;color:var(--accent-dark);border:1px solid var(--accent)}
+button:active{opacity:.85}
+.hint{font-size:13px;color:var(--muted);margin:-4px 0 10px}
+.hidden{display:none !important}
+
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tab{flex:1;background:transparent;color:var(--accent-dark);border:1px solid var(--accent);padding:10px}
+.tab.active{background:var(--accent);color:#fff}
+.weeknav{display:flex;gap:8px;margin-bottom:12px}
+
+.banner{
+  padding:12px 14px;border-radius:14px;background:var(--stone);font-weight:600;
+  margin-bottom:12px;min-height:20px;font-size:15px;transition:background .3s,color .3s
+}
+.banner.warn{background:var(--warn);color:#fff}
+
+/* Dagsoverblik */
+.daywrap{
+  position:relative;height:62vh;min-height:320px;overflow:hidden;touch-action:none;cursor:grab;
+  border-radius:var(--radius);background:var(--card);border:1px solid var(--border)
+}
+.daywrap:active{cursor:grabbing}
+.timeline{position:absolute;left:4px;right:4px;top:0;transition:transform 1s linear}
+.block{
+  position:absolute;border-radius:14px;background:var(--bg);
+  border:1px solid var(--border);padding:10px 12px;display:flex;gap:10px;align-items:center;
+  overflow:hidden;transition:opacity .3s,box-shadow .3s,border-color .3s
+}
+.block.current{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.block.past{opacity:.4}
+.block .txt{flex:1;min-width:0}
+.block .time{font-size:13px;color:var(--muted)}
+.block .act{font-size:16px;font-weight:600;overflow-wrap:anywhere}
+.block img{width:60px;height:60px;border-radius:12px;object-fit:cover;flex:none;background:var(--stone)}
+.fade{position:absolute;left:0;right:0;height:40px;pointer-events:none;z-index:4}
+.fade.top{top:0;background:linear-gradient(var(--card),transparent)}
+.fade.bottom{bottom:0;background:linear-gradient(transparent,var(--card))}
+.nowline{position:absolute;left:0;right:0;top:50%;height:3px;background:var(--red);z-index:5;pointer-events:none;border-radius:2px}
+.nowlabel{
+  position:absolute;right:10px;top:calc(50% - 26px);z-index:6;font-size:13px;font-weight:600;
+  color:var(--red);background:var(--card);padding:2px 8px;border-radius:10px;border:1px solid var(--red);pointer-events:none
+}
+.resetbtn{
+  position:absolute;left:10px;top:10px;z-index:7;padding:6px 12px;font-size:14px;border-radius:12px
+}
+
+/* Ugeoverblik */
+.day{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.day h3{margin:0 0 8px;font-size:16px;text-transform:capitalize}
+.day .line{font-size:15px;padding:6px 0;border-bottom:1px dashed var(--border);overflow-wrap:anywhere}
+.day .line:last-child{border-bottom:none}
+.day .line b{color:var(--muted);font-weight:600;margin-right:6px;font-variant-numeric:tabular-nums}
+.day .none{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header-row">
+    <div>
+      <h1>Dagsplan og overgange</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <div class="menu-wrap">
+      <button type="button" id="menuBtn" class="menu-btn" aria-label="Menu">☰</button>
+      <div id="menuPanel" class="menu-panel hidden">
+        <div class="menu-item">
+          <label class="menu-label" for="sheetUrl">Script-adresse</label>
+          <input id="sheetUrl" type="text" placeholder="Indsæt web-app-adressen" style="margin-bottom:4px">
+          <div id="sheetStatus" class="hint" style="margin:0"></div>
+        </div>
+        <div class="menu-item">
+          <label class="menu-label" for="sourceSel">Kilde</label>
+          <select id="sourceSel"><option value="sheet">Regneark (Dagsplan)</option><option value="cal">Google Kalender</option></select>
+        </div>
+        <div class="menu-item">
+          <label class="menu-label" for="tokenInput">Kalender-kode</label>
+          <input id="tokenInput" type="text">
+        </div>
+        <div class="menu-item">
+          <button type="button" class="secondary" id="refreshBtn" style="width:100%">Opdater plan</button>
+        </div>
+        <div class="menu-item hint" style="margin:0">Tip: Del-knappen → Føj til hjemmeskærm, så åbnes appen som en app.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button type="button" id="tabDay" class="tab active">I dag</button>
+    <button type="button" id="tabWeek" class="tab">Uge</button>
+  </div>
+
+  <div id="transition" class="banner"></div>
+
+  <div id="dayView">
+    <div id="emptyDay" class="card hidden">Ingen blokke i dag.</div>
+    <div id="dayWrap" class="daywrap">
+      <button type="button" id="resetBtn" class="secondary resetbtn hidden" style="background:var(--card)">⟲ Gå til nu</button>
+      <div id="timeline" class="timeline"></div>
+      <div class="fade top"></div>
+      <div class="fade bottom"></div>
+      <div class="nowline"></div>
+      <div id="nowLabel" class="nowlabel"></div>
+    </div>
+  </div>
+
+  <div id="weekView" class="hidden"></div>
+</div>
+
+<script>
+const SHEET_KEY = 'dagsplan-sheet-url';
+const TOKEN_KEY = 'dagsplan-token';
+const SOURCE_KEY = 'dagsplan-source';
+const CACHE_KEY = 'dagsplan-cache';
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwPXPYaJnGCGOF2muhb0bxbcsRN_cHS7Nh1D02dOoIxG1yMAnz49vlgtrNO4XXEXI4ZEQ/exec';
+const DEFAULT_TOKEN = '3010';
+const TAB = 'Dagsplan';
+const PPM = 3;          // pixels pr. minut
+const MIN_H = 52;       // mindste visuelle højde på en blok
+const WARN_MIN = 10;    // minutter før skift hvor overgang vises
+
+const DEMO = [
+  {Dag:'alle', Start:'07:00', Slut:'07:30', Aktivitet:'Vågn op og spis morgenmad', Billede:''},
+  {Dag:'alle', Start:'08:15', Slut:'12:00', Aktivitet:'Skole', Billede:''},
+  {Dag:'alle', Start:'12:00', Slut:'12:30', Aktivitet:'Frokost', Billede:''},
+  {Dag:'alle', Start:'13:00', Slut:'14:00', Aktivitet:'Lektier', Billede:''},
+  {Dag:'alle', Start:'18:00', Slut:'18:45', Aktivitet:'Aftensmad', Billede:''},
+  {Dag:'alle', Start:'19:30', Slut:'20:00', Aktivitet:'Klar til sengetid', Billede:''}
+];
+
+let ROWS = [];
+let BLOCKS_TODAY = [];
+let BASE = 0;          // minut for toppen af tidslinjen
+let baseShift = 0;     // forskydning så "nu" står på den røde linje
+let dragOffset = 0;    // forskydning fra træk med mus/finger
+let view = 'day';
+let weekOffset = 0;
+let lastDay = '';
+
+const $ = (id) => document.getElementById(id);
+function esc(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmt(m){ const mm = Math.floor(m); return pad(Math.floor(mm/60)) + ':' + pad(mm%60); }
+function isoDate(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+
+/* ---------- Parsing ---------- */
+function parseTime(v){
+  if(v === null || v === undefined || v === '') return null;
+  if(typeof v === 'number') return v < 1 ? Math.round(v*1440) : null;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{1,2}):(\d{2})/);
+  if(m) return (+m[1])*60 + (+m[2]);
+  m = s.match(/^1899-12-30T(\d{2}):(\d{2})/);
+  if(m) return (+m[1])*60 + (+m[2]);
+  const d = new Date(s);
+  if(!isNaN(d)) return d.getHours()*60 + d.getMinutes();
+  return null;
+}
+const WEEKDAYS = {'søn':0,'søndag':0,'man':1,'mandag':1,'tir':2,'tirsdag':2,'ons':3,'onsdag':3,
+                  'tor':4,'torsdag':4,'fre':5,'fredag':5,'lør':6,'lørdag':6};
+function parseDay(v){
+  const s = String(v || '').trim().toLowerCase();
+  if(!s || s === 'alle') return {date:null, wd:null};
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return {date:s.slice(0,10), wd:null};
+  const key = Object.keys(WEEKDAYS).find(k => s.startsWith(k));
+  return {date:null, wd: key !== undefined ? WEEKDAYS[key] : null};
+}
+function driveImg(s){
+  if(!s) return '';
+  const m = s.match(/\/d\/([\w-]+)/) || s.match(/[?&]id=([\w-]+)/);
+  if(m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600';
+  return /^https?:\/\//.test(s) ? s : '';
+}
+function normalize(rows){
+  return (rows || []).map(r => {
+    const d = parseDay(r['Dag']);
+    const start = parseTime(r['Start']);
+    let end = parseTime(r['Slut']);
+    const label = String(r['Aktivitet'] || '').trim();
+    if(start === null || !label) return null;
+    if(end === null || end <= start) end = start + 30;
+    return {date:d.date, wd:d.wd, start, end, label, img: driveImg(String(r['Billede'] || '').trim())};
+  }).filter(Boolean);
+}
+function rowsFor(D){
+  const iso = isoDate(D);
+  const dated = ROWS.filter(r => r.date === iso);
+  const base = dated.length ? dated
+    : ROWS.filter(r => !r.date && (r.wd === null || r.wd === D.getDay()));
+  return base.slice().sort((a,b) => a.start - b.start || a.end - b.end);
+}
+
+/* ---------- Lanes: overlappende aftaler side om side ---------- */
+function lanes(items){
+  const out = [];
+  let cluster = [], laneEnds = [], clusterEnd = -1;
+  const flush = () => {
+    if(!cluster.length) return;
+    const n = Math.max(...cluster.map(c => c.lane)) + 1;
+    cluster.forEach(c => { c.lanes = n; out.push(c); });
+    cluster = []; laneEnds = []; clusterEnd = -1;
+  };
+  items.forEach(b => {
+    if(cluster.length && b.start >= clusterEnd) flush();
+    let lane = laneEnds.findIndex(e => e <= b.start);
+    if(lane < 0){ lane = laneEnds.length; laneEnds.push(b.end); }
+    else laneEnds[lane] = b.end;
+    clusterEnd = Math.max(clusterEnd, b.end);
+    cluster.push({...b, lane});
+  });
+  flush();
+  return out;
+}
+
+/* ---------- Dagsoverblik ---------- */
+function renderDay(){
+  const now = new Date();
+  lastDay = isoDate(now);
+  BLOCKS_TODAY = rowsFor(now);
+  const tl = $('timeline');
+  tl.innerHTML = '';
+  if(!BLOCKS_TODAY.length){
+    $('emptyDay').classList.remove('hidden');
+    $('dayWrap').classList.add('hidden');
+    $('transition').textContent = '';
+    return;
+  }
+  $('emptyDay').classList.add('hidden');
+  $('dayWrap').classList.remove('hidden');
+  BASE = Math.floor(BLOCKS_TODAY[0].start / 60) * 60;
+
+  const items = lanes(BLOCKS_TODAY.map((b,i) => ({...b, i})));
+  let bottom = 0;
+  items.forEach(b => {
+    const top = (b.start - BASE) * PPM;
+    const h = Math.max((b.end - b.start) * PPM, MIN_H);
+    bottom = Math.max(bottom, top + h);
+    const el = document.createElement('div');
+    el.className = 'block';
+    el.dataset.i = b.i;
+    el.style.top = top + 'px';
+    el.style.height = h + 'px';
+    el.style.left = 'calc(' + (b.lane * 100 / b.lanes) + '% + 2px)';
+    el.style.width = 'calc(' + (100 / b.lanes) + '% - 4px)';
+    el.innerHTML =
+      '<div class="txt"><div class="time">' + fmt(b.start) + '–' + fmt(b.end) + '</div>' +
+      '<div class="act">' + esc(b.label) + '</div></div>' +
+      (b.img ? '<img src="' + escAttr(b.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '');
+    tl.appendChild(el);
+  });
+  tl.style.height = (bottom + 60) + 'px';
+  positionNow();
+}
+
+function applyShift(){
+  $('timeline').style.transform = 'translateY(' + (baseShift + dragOffset) + 'px)';
+  $('resetBtn').classList.toggle('hidden', dragOffset === 0);
+}
+
+function positionNow(){
+  if(!BLOCKS_TODAY.length) return;
+  const now = new Date();
+  const t = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  const lineY = $('dayWrap').clientHeight / 2;
+  baseShift = lineY - (t - BASE) * PPM;
+  applyShift();
+  $('nowLabel').textContent = fmt(t);
+
+  let cur = -1;
+  BLOCKS_TODAY.forEach((b,i) => { if(t >= b.start && t < b.end) cur = i; });
+  const next = BLOCKS_TODAY.findIndex(b => b.start > t);
+
+  document.querySelectorAll('.block').forEach(el => {
+    const i = +el.dataset.i;
+    el.classList.toggle('current', i === cur);
+    el.classList.toggle('past', BLOCKS_TODAY[i].end <= t);
+  });
+
+  let text, warn = false;
+  if(next >= 0){
+    const mins = Math.ceil(BLOCKS_TODAY[next].start - t);
+    if(mins <= WARN_MIN){
+      warn = true;
+      text = 'Om ' + mins + ' min: ' + BLOCKS_TODAY[next].label;
+    }
+  }
+  if(!text){
+    if(cur >= 0) text = 'Nu: ' + BLOCKS_TODAY[cur].label;
+    else if(next >= 0) text = 'Næste: ' + BLOCKS_TODAY[next].label + ' kl. ' + fmt(BLOCKS_TODAY[next].start);
+    else text = 'Dagen er slut';
+  }
+  const bn = $('transition');
+  bn.textContent = text;
+  bn.classList.toggle('warn', warn);
+}
+
+/* Træk med mus/finger (og hjulet på computer) */
+(function(){
+  const wrap = $('dayWrap');
+  let dragging = false, startY = 0, startOffset = 0;
+  wrap.addEventListener('pointerdown', e => {
+    if(e.target.closest('#resetBtn')) return;
+    dragging = true;
+    startY = e.clientY;
+    startOffset = dragOffset;
+    $('timeline').style.transition = 'none';
+    wrap.setPointerCapture(e.pointerId);
+  });
+  wrap.addEventListener('pointermove', e => {
+    if(!dragging) return;
+    dragOffset = startOffset + (e.clientY - startY);
+    applyShift();
+  });
+  const end = () => { dragging = false; $('timeline').style.transition = ''; };
+  wrap.addEventListener('pointerup', end);
+  wrap.addEventListener('pointercancel', end);
+  wrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    dragOffset -= e.deltaY;
+    applyShift();
+  }, {passive:false});
+  $('resetBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    dragOffset = 0;
+    applyShift();
+  });
+})();
+
+/* ---------- Ugeoverblik ---------- */
+function renderWeek(){
+  const today = new Date();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7) + weekOffset * 7);
+  const wrap = $('weekView');
+  wrap.innerHTML = '<div class="weeknav"><button type="button" id="wkThis" class="tab' + (weekOffset === 0 ? ' active' : '') + '">Denne uge</button><button type="button" id="wkNext" class="tab' + (weekOffset === 1 ? ' active' : '') + '">Næste uge</button></div>';
+  for(let i = 0; i < 7; i++){
+    const D = new Date(monday);
+    D.setDate(monday.getDate() + i);
+    const rows = rowsFor(D);
+    const card = document.createElement('div');
+    card.className = 'day' + (isoDate(D) === isoDate(today) ? ' today' : '');
+    const title = D.toLocaleDateString('da-DK', {weekday:'long', day:'numeric', month:'short'});
+    card.innerHTML = '<h3>' + esc(title) + '</h3>' + (rows.length
+      ? rows.map(r => '<div class="line"><b>' + fmt(r.start) + '</b>' + esc(r.label) + '</div>').join('')
+      : '<div class="none">Ingen blokke</div>');
+    wrap.appendChild(card);
+  }
+}
+
+/* ---------- Visning ---------- */
+function setView(v){
+  view = v;
+  $('dayView').classList.toggle('hidden', v !== 'day');
+  $('weekView').classList.toggle('hidden', v !== 'week');
+  $('tabDay').classList.toggle('active', v === 'day');
+  $('tabWeek').classList.toggle('active', v === 'week');
+  renderAll();
+}
+function renderAll(){
+  const now = new Date();
+  $('sub').textContent = now.toLocaleDateString('da-DK', {weekday:'long', day:'numeric', month:'long'});
+  if(view === 'day') renderDay(); else renderWeek();
+}
+
+/* ---------- Data ---------- */
+function getUrl(){ try{ return localStorage.getItem(SHEET_KEY) || DEFAULT_SHEET_URL; }catch(e){ return DEFAULT_SHEET_URL; } }
+function setUrl(v){ try{ localStorage.setItem(SHEET_KEY, v); }catch(e){} }
+function getSource(){ try{ return localStorage.getItem(SOURCE_KEY) || 'sheet'; }catch(e){ return 'sheet'; } }
+function getToken(){ try{ return localStorage.getItem(TOKEN_KEY) || DEFAULT_TOKEN; }catch(e){ return DEFAULT_TOKEN; } }
+function loadCache(){ try{ return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); }catch(e){ return null; } }
+function saveCache(rows){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify(rows)); }catch(e){} }
+
+async function loadData(){
+  if(getSource() === 'cal') return loadCalendar();
+  return loadSheet();
+}
+
+async function loadCalendar(){
+  const st = $('sheetStatus');
+  const url = getUrl();
+  st.textContent = 'Henter fra kalender…';
+  try{
+    const sep = url.includes('?') ? '&' : '?';
+    // 21 dage: fra 7 dage tilbage (start af ugen) og 14 dage frem
+    const res = await fetch(url + sep + 'calendar=1&days=21&token=' + encodeURIComponent(getToken()) + '&t=' + Date.now());
+    const data = await res.json();
+    if(!Array.isArray(data)) throw new Error(data.error || 'ugyldigt svar');
+    saveCache(data);
+    ROWS = normalize(data);
+    st.textContent = 'Forbundet til kalender';
+  }catch(e){
+    const c = loadCache();
+    ROWS = normalize(c || DEMO);
+    st.textContent = 'Kalender: ' + (e.message || 'fejl') + (c ? ' – viser sidst hentede' : '');
+  }
+  renderAll();
+}
+
+async function loadSheet(){
+  const url = getUrl();
+  const st = $('sheetStatus');
+  let rows = null;
+  if(url){
+    st.textContent = 'Henter fra Sheets…';
+    try{
+      const sep = url.includes('?') ? '&' : '?';
+      const res = await fetch(url + sep + 'sheet=' + encodeURIComponent(TAB) + '&t=' + Date.now());
+      const data = await res.json();
+      if(!Array.isArray(data)) throw new Error('ugyldigt svar');
+      rows = data;
+      saveCache(rows);
+      st.textContent = 'Forbundet til Sheets';
+    }catch(e){
+      rows = loadCache();
+      st.textContent = rows ? 'Kunne ikke hente – viser sidst hentede plan' : 'Kunne ikke hente fra Sheets';
+    }
+  } else {
+    rows = loadCache();
+    st.textContent = rows ? 'Viser gemt plan' : 'Eksempelplan – indsæt script-adressen i menuen';
+  }
+  if(!rows) rows = DEMO;
+  ROWS = normalize(rows);
+  renderAll();
+}
+
+/* ---------- Begivenheder ---------- */
+$('menuBtn').addEventListener('click', e => { e.stopPropagation(); $('menuPanel').classList.toggle('hidden'); });
+document.addEventListener('click', e => {
+  const p = $('menuPanel');
+  if(!p.classList.contains('hidden') && !p.contains(e.target) && e.target !== $('menuBtn')) p.classList.add('hidden');
+});
+$('sheetUrl').value = getUrl();
+$('sheetUrl').addEventListener('change', e => { setUrl(e.target.value.trim()); loadData(); });
+$('refreshBtn').addEventListener('click', () => loadData());
+$('sourceSel').value = getSource();
+$('sourceSel').addEventListener('change', e => { try{ localStorage.setItem(SOURCE_KEY, e.target.value); }catch(err){} loadData(); });
+$('tokenInput').value = getToken();
+$('tokenInput').addEventListener('change', e => { try{ localStorage.setItem(TOKEN_KEY, e.target.value.trim()); }catch(err){} loadData(); });
+$('tabDay').addEventListener('click', () => setView('day'));
+$('tabWeek').addEventListener('click', () => setView('week'));
+$('weekView').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if(!b) return;
+  if(b.id === 'wkThis'){ weekOffset = 0; renderWeek(); }
+  if(b.id === 'wkNext'){ weekOffset = 1; renderWeek(); }
+});
+document.addEventListener('visibilitychange', () => { if(!document.hidden) loadData(); });
+
+setInterval(() => {
+  if(isoDate(new Date()) !== lastDay){ renderAll(); return; }
+  if(view === 'day') positionNow();
+}, 1000);
+
+loadData();
+</script>
+</body>
+</html>

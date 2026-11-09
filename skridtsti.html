@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lille skridt-stien</title>
+<style>
+:root{
+  --bg:#fdfaf3; --card:#ffffff; --text:#3a362e; --muted:#8a8375;
+  --accent:#5a9b7c; --accent-dark:#3f7059; --stone:#e7e1d2; --stone-done:#c7e3d3;
+  --border:#e4ddcb; --warn:#d8895a; --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#20231f; --card:#2a2e28; --text:#ede8dc; --muted:#a3a08f;
+  --accent:#6fb894; --accent-dark:#4f8d6f; --stone:#3a3e36; --stone-done:#2f4f40;
+  --border:#3a3e36; --warn:#e3a179; color-scheme: dark; }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--text);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.wrap{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;font-weight:600;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.menu-wrap{position:relative;flex:none}
+.menu-btn{
+  width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--border);
+  color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0
+}
+.menu-panel{
+  position:absolute;top:48px;right:0;z-index:20;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;width:270px;max-width:80vw;box-shadow:0 8px 24px rgba(0,0,0,.18)
+}
+.menu-item{margin-bottom:12px}
+.menu-item:last-child{margin-bottom:0}
+.menu-label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+.form-msg{background:var(--warn);color:#fff;border-radius:10px;padding:10px 12px;font-size:14px;margin:-2px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+input[type=text], select{
+  width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:16px;margin-bottom:10px
+}
+button{
+  font-size:16px;font-weight:600;border:none;border-radius:12px;padding:12px 16px;
+  cursor:pointer;color:#fff;background:var(--accent)
+}
+button.secondary{background:transparent;color:var(--accent-dark);border:1px solid var(--accent)}
+button:active{opacity:.85}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.path{display:flex;flex-direction:column;gap:10px;margin:10px 0}
+.stone{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;width:100%;
+  background:var(--stone);border:1px solid var(--border);cursor:pointer;transition:background .2s;
+  text-align:left;font:inherit;color:inherit
+}
+.stone:disabled{cursor:default}
+.resume-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--stone);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.resume-row span{font-size:14px}
+.stone.done{background:var(--stone-done)}
+.stone .dot{
+  width:26px;height:26px;border-radius:50%;flex:none;border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--accent-dark)
+}
+.stone.done .dot{background:var(--accent);color:#fff;border-color:var(--accent)}
+.stone .label{font-size:15px}
+.stone.done .label{text-decoration:line-through;color:var(--muted)}
+.timer-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0}
+svg{display:block}
+.timer-text{font-size:28px;font-weight:600}
+.celebrate{
+  background:var(--accent);color:#fff;border-radius:14px;padding:16px;text-align:center;margin-top:10px
+}
+.celebrate .big{font-size:17px;font-weight:600;margin-bottom:4px}
+.celebrate .star{font-size:34px;display:block;margin:4px 0}
+.stars-progress{display:flex;gap:6px;justify-content:center;margin-top:16px;font-size:24px}
+.stars-progress .star-slot{color:var(--border)}
+.stars-progress .star-slot.filled{color:#e3b341}
+.streak{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-top:6px}
+.hidden{display:none}
+.hint{font-size:13px;color:var(--muted);margin:-4px 0 10px}
+.step-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.step-row input[type=text]{flex:1;margin-bottom:0}
+.step-row input[type=number]{
+  width:56px;padding:12px 6px;border-radius:12px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:16px;text-align:center
+}
+.step-row .unit{font-size:13px;color:var(--muted);flex:none}
+.step-row .removeBtn{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1}
+.saved-row select{margin-bottom:0;flex:1}
+.saved-row{margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header-row">
+    <div>
+      <h1>Lille skridt-stien</h1>
+      <div class="sub">Del en opgave op i små, synlige trin</div>
+    </div>
+    <div class="menu-wrap">
+      <button type="button" id="menuBtn" class="menu-btn" aria-label="Menu">☰</button>
+      <div id="menuPanel" class="menu-panel hidden">
+        <div class="menu-item">
+          <label class="menu-label" for="sheetUrl">Sheet-adresse</label>
+          <input id="sheetUrl" type="text" placeholder="Valgfrit, til deling på tværs af telefoner" style="margin-bottom:4px">
+          <div id="sheetStatus" class="hint" style="margin:0"></div>
+        </div>
+        <div class="menu-item">
+          <button type="button" class="secondary" id="backToMenuBtn" style="width:100%">Tilbage til forsiden</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="setup" class="card">
+    <div id="resumeRow" class="resume-row hidden">
+      <span id="resumeText"></span>
+      <button type="button" class="secondary" id="resumeBtn" style="flex:none">Fortsæt</button>
+    </div>
+    <input id="taskName" type="text" placeholder="Hvad skal laves? (fx ryd skrivebordet)">
+    <div id="formMsg" class="form-msg hidden"></div>
+    <div class="row saved-row">
+      <select id="savedListsSelect"><option value="">Hent gemt liste…</option></select>
+      <button type="button" class="secondary" id="deleteSavedBtn" style="flex:none">Slet</button>
+    </div>
+    <div class="hint">Tilføj trin, og vælg hvor mange minutter hvert trin må tage</div>
+    <div id="stepRows"></div>
+    <button class="secondary" id="addStepBtn" style="width:100%;margin-bottom:12px">+ Tilføj trin</button>
+    <div class="row">
+      <button class="secondary" id="saveSavedBtn">Gem liste</button>
+      <button id="startBtn">Start stien</button>
+    </div>
+    <div id="streakLine" class="streak"></div>
+  </div>
+
+  <div id="active" class="card hidden">
+    <div style="font-weight:600;margin-bottom:8px" id="activeTaskName"></div>
+    <div class="path" id="pathEl"></div>
+    <div class="stars-progress" id="starsProgress"></div>
+
+    <div id="timerBox" class="timer-wrap hidden">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="60" fill="none" stroke="var(--stone)" stroke-width="10"/>
+        <circle id="timerRing" cx="70" cy="70" r="60" fill="none" stroke="var(--accent)" stroke-width="10"
+          stroke-linecap="round" transform="rotate(-90 70 70)"
+          stroke-dasharray="377" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-text" id="timerText">05:00</div>
+      <div class="row" style="width:100%">
+        <button class="secondary" id="pauseResumeBtn">Pause</button>
+        <button id="skipTimerBtn">Trin er klaret</button>
+      </div>
+    </div>
+
+    <div id="celebrateBox" class="celebrate hidden">
+      <span class="star">⭐</span>
+      <div class="big">Tillykke!</div>
+      <div style="height:10px"></div>
+      <button id="continueBtn" style="background:#fff;color:var(--accent-dark)">Videre</button>
+    </div>
+
+    <div id="doneBox" class="hidden" style="text-align:center;padding:10px 0">
+      <div style="font-size:17px;font-weight:600;margin-bottom:6px">Godt klaret! Hele stien er gået 🌱</div>
+      <button id="newTaskBtn">Lav en ny sti</button>
+    </div>
+
+    <div style="height:10px"></div>
+    <button class="secondary" id="resetBtn" style="width:100%">Afbryd og start forfra</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'lille-skridt-stien-state';
+const STREAK_KEY = 'lille-skridt-stien-streak';
+let STEP_SECONDS = 5 * 60;
+
+let state = null;
+let manualSetupView = false;
+let timerInterval = null;
+let timerRunning = false;
+let timeLeft = STEP_SECONDS;
+
+const $ = (id) => document.getElementById(id);
+
+function loadStreak(){
+  try{ return parseInt(localStorage.getItem(STREAK_KEY) || '0', 10); }catch(e){ return 0; }
+}
+function saveStreak(n){
+  try{ localStorage.setItem(STREAK_KEY, String(n)); }catch(e){}
+}
+
+function renderStreak(){
+  const n = loadStreak();
+  $('streakLine').textContent = n > 0 ? ('Fuldførte stier: ' + n + ' 🌱') : '';
+}
+
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function clearState(){
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function addStepRow(label, minutes, placeholder){
+  const row = document.createElement('div');
+  row.className = 'step-row';
+  row.innerHTML =
+    '<input type="text" class="stepLabel" placeholder="' + escapeAttr(placeholder||'Trin') + '" value="' + escapeAttr(label||'') + '">' +
+    '<input type="number" class="stepMinutes" min="1" max="60" value="' + (minutes||5) + '">' +
+    '<span class="unit">min</span>' +
+    '<button type="button" class="removeBtn" aria-label="Fjern trin">×</button>';
+  row.querySelector('.removeBtn').addEventListener('click', ()=>row.remove());
+  $('stepRows').appendChild(row);
+}
+function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+function showFormMsg(text){
+  const el = $('formMsg');
+  el.textContent = text;
+  el.classList.remove('hidden');
+}
+function hideFormMsg(){ $('formMsg').classList.add('hidden'); }
+
+const SHEET_URL_KEY = 'lille-skridt-stien-sheet-url';
+function getSheetUrl(){ try{ return localStorage.getItem(SHEET_URL_KEY) || ''; }catch(e){ return ''; } }
+function setSheetUrl(v){ try{ localStorage.setItem(SHEET_URL_KEY, v); }catch(e){} }
+
+const SAVED_KEY = 'lille-skridt-stien-saved';
+let remoteListsCache = {};
+function loadSavedLists(){
+  try{ return JSON.parse(localStorage.getItem(SAVED_KEY) || '{}'); }catch(e){ return {}; }
+}
+function saveSavedLists(obj){
+  try{ localStorage.setItem(SAVED_KEY, JSON.stringify(obj)); }catch(e){}
+}
+async function renderSavedOptions(){
+  const local = loadSavedLists();
+  let merged = Object.assign({}, local);
+  const url = getSheetUrl();
+  const statusEl = $('sheetStatus');
+  if(url){
+    statusEl.textContent = 'Henter fra Sheets…';
+    try{
+      const sep = url.includes('?') ? '&' : '?';
+      const res = await fetch(url + sep + 'sheet=Trin-lister&t=' + Date.now());
+      const rows = await res.json();
+      const grouped = {};
+      (rows||[]).forEach(r=>{
+        const name = String(r['Liste']||'').trim();
+        const label = String(r['Trin']||'').trim();
+        if(!name || !label) return;
+        let minutes = parseInt(r['Minutter'], 10);
+        if(isNaN(minutes) || minutes < 1) minutes = 5;
+        if(!grouped[name]) grouped[name] = {steps:[]};
+        grouped[name].steps.push({label, minutes});
+      });
+      merged = Object.assign({}, merged, grouped);
+      statusEl.textContent = 'Forbundet til Sheets';
+    }catch(e){
+      statusEl.textContent = 'Kunne ikke hente fra Sheets – viser kun lokale lister';
+    }
+  } else {
+    statusEl.textContent = '';
+  }
+  remoteListsCache = merged;
+  const sel = $('savedListsSelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Hent gemt liste…</option>';
+  Object.keys(merged).forEach(name=>{
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  sel.value = merged[current] ? current : '';
+}
+function loadSelectedList(name){
+  const list = remoteListsCache[name] || loadSavedLists()[name];
+  if(!list) return;
+  $('taskName').value = name;
+  $('stepRows').innerHTML = '';
+  list.steps.forEach(s=>addStepRow(s.label, s.minutes));
+}
+function saveCurrentAsList(){
+  hideFormMsg();
+  const name = $('taskName').value.trim();
+  if(!name){
+    showFormMsg('Skriv en titel på opgaven, så den kan gemmes.');
+    return;
+  }
+  const rows = Array.from(document.querySelectorAll('.step-row'));
+  const steps = rows.map(r=>{
+    const label = r.querySelector('.stepLabel').value.trim();
+    let minutes = parseInt(r.querySelector('.stepMinutes').value, 10);
+    if(isNaN(minutes) || minutes < 1) minutes = 5;
+    return {label, minutes};
+  }).filter(s=>s.label);
+  if(steps.length === 0){
+    showFormMsg('Tilføj mindst ét trin, så listen kan gemmes.');
+    return;
+  }
+  const lists = loadSavedLists();
+  lists[name] = {steps};
+  saveSavedLists(lists);
+  const url = getSheetUrl();
+  if(url){
+    fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        sheet: 'Trin-lister',
+        action: 'replaceGroup',
+        keyColumn: 'Liste',
+        keyValue: name,
+        rows: steps.map(s=>({Trin: s.label, Minutter: s.minutes}))
+      })
+    }).then(()=>renderSavedOptions()).catch(()=>{
+      showFormMsg('Listen er gemt lokalt, men kunne ikke sendes til Sheets lige nu.');
+    });
+  } else {
+    renderSavedOptions();
+  }
+  $('savedListsSelect').value = name;
+}
+
+function startTask(){
+  hideFormMsg();
+  const name = $('taskName').value.trim();
+  const rows = Array.from(document.querySelectorAll('.step-row'));
+  const steps = rows.map(r=>{
+    const label = r.querySelector('.stepLabel').value.trim();
+    let minutes = parseInt(r.querySelector('.stepMinutes').value, 10);
+    if(isNaN(minutes) || minutes < 1) minutes = 5;
+    return {label, minutes};
+  }).filter(s=>s.label);
+  if(!name){
+    showFormMsg('Skriv en titel på opgaven først.');
+    return;
+  }
+  if(steps.length === 0){
+    showFormMsg('Tilføj mindst ét trin først.');
+    return;
+  }
+  manualSetupView = false;
+  state = { name, steps: steps.map(s=>({label:s.label, minutes:s.minutes, done:false})), current:0, phase:'path' };
+  saveState();
+  render();
+}
+
+function render(){
+  if(!state || manualSetupView){
+    $('setup').classList.remove('hidden');
+    $('active').classList.add('hidden');
+    renderStreak();
+    if(state && manualSetupView){
+      $('resumeRow').classList.remove('hidden');
+      $('resumeText').textContent = 'I gang med: ' + state.name;
+    } else {
+      $('resumeRow').classList.add('hidden');
+    }
+    return;
+  }
+  $('setup').classList.add('hidden');
+  $('active').classList.remove('hidden');
+  $('activeTaskName').textContent = state.name;
+
+  const pathEl = $('pathEl');
+  pathEl.innerHTML = '';
+  state.steps.forEach((step, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'stone' + (step.done ? ' done' : '');
+    btn.disabled = !!step.done;
+    btn.innerHTML = '<span class="dot">' + (step.done ? '✓' : (i+1)) + '</span><span class="label">' + escapeHtml(step.label) + '</span>';
+    btn.addEventListener('click', ()=>{ if(!step.done) beginStep(i); });
+    pathEl.appendChild(btn);
+  });
+
+  const starsEl = $('starsProgress');
+  starsEl.innerHTML = '';
+  state.steps.forEach((step)=>{
+    const s = document.createElement('span');
+    s.className = 'star-slot' + (step.done ? ' filled' : '');
+    s.textContent = step.done ? '★' : '☆';
+    starsEl.appendChild(s);
+  });
+
+  $('timerBox').classList.add('hidden');
+  $('celebrateBox').classList.add('hidden');
+  $('doneBox').classList.add('hidden');
+  stopTimer();
+
+  const allDone = state.steps.every(s=>s.done);
+  if(allDone){
+    $('doneBox').classList.remove('hidden');
+    const n = loadStreak() + 1;
+    saveStreak(n);
+    clearState();
+    state = null;
+    return;
+  }
+
+  if(state.phase === 'timer'){
+    $('timerBox').classList.remove('hidden');
+    STEP_SECONDS = (state.steps[state.current].minutes || 5) * 60;
+    resetTimerDisplay();
+    startTimer();
+  } else if(state.phase === 'celebrate'){
+    $('celebrateBox').classList.remove('hidden');
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function beginStep(index){
+  state.current = index;
+  state.phase = 'timer';
+  STEP_SECONDS = (state.steps[index].minutes || 5) * 60;
+  timeLeft = STEP_SECONDS;
+  saveState();
+  render();
+}
+
+function resetTimerDisplay(){
+  timeLeft = STEP_SECONDS;
+  updateTimerUI();
+}
+
+function updateTimerUI(){
+  const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+  const s = (timeLeft%60).toString().padStart(2,'0');
+  $('timerText').textContent = m + ':' + s;
+  const circumference = 377;
+  const fraction = Math.max(0, timeLeft/STEP_SECONDS);
+  $('timerRing').setAttribute('stroke-dashoffset', String(circumference*(1-fraction)));
+}
+
+function startTimer(){
+  timerRunning = true;
+  $('pauseResumeBtn').textContent = 'Pause';
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    if(timeLeft <= 0){
+      stopTimer();
+      finishStep(true);
+      return;
+    }
+    updateTimerUI();
+  }, 1000);
+}
+function stopTimer(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+  timerRunning = false;
+}
+
+function finishStep(){
+  state.steps[state.current].done = true;
+  state.phase = 'celebrate';
+  saveState();
+  render();
+}
+
+$('addStepBtn').addEventListener('click', ()=>addStepRow('',5));
+$('startBtn').addEventListener('click', startTask);
+$('saveSavedBtn').addEventListener('click', saveCurrentAsList);
+$('savedListsSelect').addEventListener('change', (e)=>loadSelectedList(e.target.value));
+$('sheetUrl').addEventListener('change', (e)=>{
+  setSheetUrl(e.target.value.trim());
+  renderSavedOptions();
+});
+$('deleteSavedBtn').addEventListener('click', ()=>{
+  const name = $('savedListsSelect').value;
+  if(!name) return;
+  if(confirm('Slet listen "' + name + '"?')){
+    const lists = loadSavedLists();
+    delete lists[name];
+    saveSavedLists(lists);
+    renderSavedOptions();
+  }
+});
+$('pauseResumeBtn').addEventListener('click', ()=>{
+  if(timerRunning){ stopTimer(); $('pauseResumeBtn').textContent = 'Fortsæt'; }
+  else { startTimer(); }
+});
+$('skipTimerBtn').addEventListener('click', ()=>{ stopTimer(); finishStep(); });
+$('continueBtn').addEventListener('click', ()=>{
+  state.phase = 'path';
+  saveState();
+  render();
+});
+$('newTaskBtn').addEventListener('click', ()=>{
+  $('taskName').value='';
+  $('stepRows').innerHTML='';
+  addStepRow('',5,'fx Saml papirer'); addStepRow('',5);
+  render();
+});
+$('resetBtn').addEventListener('click', ()=>{
+  if(confirm('Afbryde og starte forfra?')){
+    clearState(); state = null; manualSetupView = false; stopTimer(); render();
+  }
+});
+$('taskName').addEventListener('input', hideFormMsg);
+
+$('menuBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  $('menuPanel').classList.toggle('hidden');
+});
+document.addEventListener('click', (e)=>{
+  const panel = $('menuPanel');
+  if(!panel.classList.contains('hidden') && !panel.contains(e.target) && e.target !== $('menuBtn')){
+    panel.classList.add('hidden');
+  }
+});
+$('backToMenuBtn').addEventListener('click', ()=>{
+  $('menuPanel').classList.add('hidden');
+  manualSetupView = true;
+  render();
+});
+$('resumeBtn').addEventListener('click', ()=>{
+  manualSetupView = false;
+  render();
+});
+
+if(document.querySelectorAll('.step-row').length === 0){
+  addStepRow('',5,'fx Saml papirer'); addStepRow('',5);
+}
+$('sheetUrl').value = getSheetUrl();
+renderSavedOptions();
+state = loadState();
+render();
+</script>
+</body>
+</html>

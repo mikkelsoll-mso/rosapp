@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Min forside</title>
+<style>
+:root{
+  --bg:#fdfaf3; --card:#ffffff; --text:#3a362e; --muted:#8a8375;
+  --accent:#5a9b7c; --accent-dark:#3f7059; --stone:#e7e1d2;
+  --border:#e4ddcb; --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#20231f; --card:#2a2e28; --text:#ede8dc; --muted:#a3a08f;
+  --accent:#6fb894; --accent-dark:#4f8d6f; --stone:#3a3e36;
+  --border:#3a3e36; color-scheme: dark; }
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--text);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.wrap{max-width:480px;margin:0 auto;padding:24px 16px 40px}
+.top{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.logo{
+  width:88px;height:88px;flex:none;border-radius:50%;object-fit:cover;
+  border:3px solid var(--card);box-shadow:0 4px 14px rgba(0,0,0,.12);background:#000
+}
+.hilsen{font-size:26px;font-weight:600;margin:0}
+.logo{cursor:zoom-in;transition:transform .15s ease}
+.logo:active{transform:scale(.96)}
+#billed{
+  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.9);
+  display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out
+}
+#billed.hidden{display:none}
+#billed img{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px}
+.sub{color:var(--muted);font-size:15px;margin-bottom:24px;line-height:1.5}
+.sektion{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:28px 0 10px}
+.app{
+  display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-bottom:12px;transition:transform .1s ease;
+}
+.app:active{transform:scale(.99)}
+.ikon{
+  width:56px;height:56px;flex:none;border-radius:14px;background:#000;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:26px
+}
+.ikon img{width:100%;height:100%;object-fit:cover;transform:scale(2.2);display:block}
+.tekst{flex:1;min-width:0}
+.titel{font-size:17px;font-weight:600;margin-bottom:2px}
+.beskrivelse{font-size:14px;color:var(--muted);line-height:1.4}
+.pil{color:var(--accent-dark);font-size:20px;flex:none}
+.snart{opacity:.6}
+.snart .pil{visibility:hidden}
+.tag{
+  display:inline-block;font-size:11px;font-weight:600;color:var(--accent-dark);
+  background:var(--stone);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:2px
+}
+.fod{text-align:center;color:var(--muted);font-size:13px;margin-top:32px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <img class="logo" id="logo" src="img/svend-small.png" alt="Svend" role="button" tabindex="0" aria-label="Vis hele billedet">
+    <div class="hilsen" id="hilsen">Hej</div>
+  </div>
+  <div class="sub" id="under">Vælg det, du har brug for lige nu.</div>
+
+  <div class="sektion">Mine apps</div>
+  <div id="liste"></div>
+
+  <div class="fod">Flere apps kommer til her.</div>
+</div>
+
+<div id="billed" class="hidden" aria-hidden="true">
+  <img src="img/svend.png" alt="Svend">
+</div>
+
+<script>
+/* ==========================================================
+   Her styrer du forsiden.
+   - Tilføj en ny app: kopiér en linje, udfyld felterne.
+   - Sæt klart: true, når en app er klar til at blive brugt.
+   - Sæt klar: false (eller fjern linjen), hvis den kun er en idé endnu.
+   ========================================================== */
+const NAVN = "";   // fx "Mikkel" – lad stå tom for kun "Hej"
+
+const APPS = [
+  {
+    titel: "Min farvedag",
+    beskrivelse: "Hvilken farve passer til din dag lige nu?",
+    ikon: "img/farvedag.png",
+    zoom: 1.5,
+    url: "farvedag.html",
+    klar: true
+  },
+  {
+    titel: "Dagsplan og overgange",
+    beskrivelse: "Se dagen i små trin, og få hjælp til skiftene imellem dem.",
+    ikon: "img/dagsplan.png",
+    url: "dagsplan.html",
+    klar: true
+  },
+  {
+    titel: "Lille skridt-stien",
+    beskrivelse: "Gå en sti af små skridt, ét ad gangen.",
+    ikon: "img/skridtsti.png",
+    zoom: 1.5,
+    url: "skridtsti.html",
+    klar: true
+  }
+  // Ny app her, fx:
+  // { titel: "Navn", beskrivelse: "Kort tekst", ikon: "img/navn.png", url: "navn.html", klar: false },
+];
+
+function hilsenTekst(){
+  const t = new Date().getHours();
+  const dag = t < 11 ? "God morgen" : t < 17 ? "Hej" : "God aften";
+  return NAVN ? `${dag}, ${NAVN}` : dag;
+}
+
+function lavKort(app){
+  const a = document.createElement(app.klar ? 'a' : 'div');
+  a.className = 'app' + (app.klar ? '' : ' snart');
+  if(app.klar){ a.href = app.url; a.target = '_self'; }
+  a.innerHTML = `
+    <div class="ikon"></div>
+    <div class="tekst">
+      <div class="titel"></div>
+      <div class="beskrivelse"></div>
+    </div>
+    <div class="pil">›</div>`;
+  const ikon = a.querySelector('.ikon');
+  if(app.ikon && /\.(png|jpe?g|webp|svg|gif)$/i.test(app.ikon)){
+    const img = document.createElement('img');
+    img.src = app.ikon;
+    img.alt = '';
+    if(app.zoom) img.style.transform = `scale(${app.zoom})`;
+    ikon.appendChild(img);
+  } else {
+    ikon.textContent = app.ikon || '✨';
+  }
+  a.querySelector('.titel').textContent = app.titel;
+  a.querySelector('.beskrivelse').textContent = app.beskrivelse || '';
+  if(!app.klar){
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = 'Snart';
+    a.querySelector('.titel').appendChild(tag);
+  }
+  return a;
+}
+
+function render(){
+  document.getElementById('hilsen').textContent = hilsenTekst();
+  const liste = document.getElementById('liste');
+  liste.innerHTML = '';
+  // Klare apps først, så kommende
+  [...APPS].sort((a,b)=>Number(b.klar !== false) - Number(a.klar !== false))
+    .forEach(app => liste.appendChild(lavKort(app)));
+}
+
+// Klik på logoet viser hele billedet
+const billed = document.getElementById('billed');
+const logo = document.getElementById('logo');
+function aabn(){ billed.classList.remove('hidden'); billed.setAttribute('aria-hidden','false'); }
+function luk(){ billed.classList.add('hidden'); billed.setAttribute('aria-hidden','true'); }
+logo.addEventListener('click', aabn);
+logo.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); aabn(); } });
+billed.addEventListener('click', luk);
+document.addEventListener('keydown', e => { if(e.key === 'Escape') luk(); });
+
+render();
+</script>
+</body>
+</html>

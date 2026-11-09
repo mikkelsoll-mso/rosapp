@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Min farvedag</title>
+<style>
+:root{
+  --bg:#fdfaf3; --card:#ffffff; --text:#3a362e; --muted:#8a8375;
+  --accent:#5a9b7c; --accent-dark:#3f7059; --stone:#e7e1d2; --stone-done:#c7e3d3;
+  --border:#e4ddcb; --warn:#d8895a; --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#20231f; --card:#2a2e28; --text:#ede8dc; --muted:#a3a08f;
+  --accent:#6fb894; --accent-dark:#4f8d6f; --stone:#3a3e36; --stone-done:#2f4f40;
+  --border:#3a3e36; --warn:#e3a179; color-scheme: dark; }
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--text);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.wrap{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;font-weight:600;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.menu-wrap{position:relative;flex:none}
+.menu-btn{
+  width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--border);
+  color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0
+}
+.menu-panel{
+  position:absolute;top:48px;right:0;z-index:20;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;width:270px;max-width:80vw;box-shadow:0 8px 24px rgba(0,0,0,.18)
+}
+.menu-item{margin-bottom:12px}
+.menu-item:last-child{margin-bottom:0}
+.menu-label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+input[type=text], textarea{
+  width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:16px;font-family:inherit
+}
+textarea{min-height:70px;margin-top:12px;resize:vertical}
+button{
+  font-size:16px;font-weight:600;border:none;border-radius:12px;padding:12px 16px;
+  cursor:pointer;color:#fff;background:var(--accent)
+}
+button:disabled{opacity:.5;cursor:default}
+button.secondary{background:transparent;color:var(--accent-dark);border:1px solid var(--accent)}
+button:active{opacity:.85}
+.hidden{display:none !important}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.status{font-size:13px;color:var(--muted);min-height:1.2em;margin-top:8px;text-align:center}
+.farver{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 4px}
+.farve{
+  border:none;border-radius:14px;padding:16px 10px;font-size:16px;font-weight:600;color:#2a2620;
+  border:1px solid var(--border);
+}
+.farve.valgt{outline:3px solid var(--accent-dark);outline-offset:2px}
+.farve.fuld{grid-column:1 / -1}
+.besked{
+  background:var(--stone);border-radius:14px;padding:14px;margin-top:12px;line-height:1.5;font-size:15px
+}
+.besked strong{display:block;margin-bottom:4px}
+.besked.hidden{display:none}
+#valg{margin-top:4px}
+.gem{width:100%;margin-top:12px}
+#historik h2{font-size:16px;font-weight:600;margin:0 0 10px}
+#historik ul{padding-left:18px;margin:0}
+#historik li{margin-bottom:6px;font-size:15px}
+.tom{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header-row">
+    <div>
+      <h1>Min farvedag</h1>
+      <div class="sub">Hvilken farve passer til din dag lige nu?</div>
+    </div>
+    <div class="menu-wrap">
+      <button type="button" id="menuBtn" class="menu-btn" aria-label="Menu">☰</button>
+      <div id="menuPanel" class="menu-panel hidden">
+        <div class="menu-item">
+          <label class="menu-label" for="sheetUrl">Sheet-adresse</label>
+          <input id="sheetUrl" type="text" placeholder="Apps Script-adresse (web-app URL)" style="margin-bottom:4px">
+          <div id="sheetStatus" class="hint" style="margin:0"></div>
+        </div>
+        <div class="menu-item">
+          <button type="button" class="secondary" id="lukMenuBtn" style="width:100%">Luk</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="farver" id="farver"></div>
+
+    <div id="valg" class="hidden">
+      <div id="besked" class="besked hidden"></div>
+      <textarea id="note" placeholder="Vil du skrive noget om dagen? (valgfrit)"></textarea>
+      <button type="button" class="gem" id="gemKnap">Gem</button>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <div class="card" id="historik">
+    <h2>Dine seneste dage</h2>
+    <ul id="liste"></ul>
+    <div id="listeTom" class="tom hidden">Ingen dage gemt endnu.</div>
+  </div>
+</div>
+
+<script>
+const SHEET_URL_KEY = 'min-farvedag-sheet-url';
+const FARVE_KEY = 'min-farvedag-seneste';
+
+const FARVER = [
+  { navn: "Blå",    css: "#8ec5f0" },
+  { navn: "Gul",    css: "#f7e07a" },
+  { navn: "Orange", css: "#f5b066" },
+  { navn: "Rød",    css: "#ef8b8b" },
+  { navn: "Grøn",   css: "#8fd19e" }
+];
+
+// Standardtekster, bruges hvis fanen Farvedag-tekster ikke kan læses
+const STANDARD = {
+  "Grøn":   { ord: "Rolig", tekst: "Fedt, du er i balance i dag. Nyd den gode følelse, og gem den gerne til en dag, hvor den er svær at finde." },
+  "Gul":    { ord: "Lidt træt", tekst: "Lidt træt eller usikker? Det er helt okay. Vælg én ting ad gangen, og tag en lille pause, når du har brug for den." },
+  "Orange": { ord: "På vagt", tekst: "Du er på vagt, og det kan være hårdt. Vil du prøve at lægge telefonen fra dig et par minutter og trække vejret langsomt?" },
+  "Rød":    { ord: "Overvældet", tekst: "Det lyder som om, det fylder meget lige nu. Du behøver ikke løse alt på én gang. Find et roligt sted, og tag din tid." },
+  "Blå":    { ord: "Ked af det", tekst: "Det er okay at have en svær dag, og du behøver ikke være glad hele tiden. Hvis det er svært, er det en god idé at fortælle en voksen, du stoler på." }
+};
+
+let tekster = { ...STANDARD };
+let valgtFarve = null;
+
+const $ = id => document.getElementById(id);
+
+const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbwPXPYaJnGCGOF2muhb0bxbcsRN_cHS7Nh1D02dOoIxG1yMAnz49vlgtrNO4XXEXI4ZEQ/exec";
+function getSheetUrl(){
+  try{
+    return (localStorage.getItem(SHEET_URL_KEY) || '').trim() || DEFAULT_SHEET_URL;
+  }catch(e){ return DEFAULT_SHEET_URL; }
+}
+function setSheetUrl(v){ try{ localStorage.setItem(SHEET_URL_KEY, v); }catch(e){} }
+
+function idag(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+
+async function hentTekster(){
+  const url = getSheetUrl();
+  if(!url) return;
+  try{
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'sheet=' + encodeURIComponent('Farvedag-tekster') + '&t=' + Date.now());
+    const rows = await r.json();
+    if(Array.isArray(rows) && rows.length){
+      const ny = {};
+      rows.forEach(row=>{
+        if(row.Farve) ny[String(row.Farve).trim()] = { ord: row.Ord || '', tekst: row.Tekst || '' };
+      });
+      tekster = { ...STANDARD, ...ny };
+    }
+  }catch(e){
+    tekster = { ...STANDARD };
+  }
+}
+
+function visFarver(){
+  const box = $('farver');
+  box.innerHTML = '';
+  FARVER.forEach((f, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'farve' + (i === FARVER.length - 1 && FARVER.length % 2 === 1 ? ' fuld' : '');
+    b.style.background = f.css;
+    b.textContent = (tekster[f.navn] && tekster[f.navn].ord) || f.navn;
+    if(valgtFarve === f.navn) b.classList.add('valgt');
+    b.addEventListener('click', ()=>vaelg(f.navn));
+    box.appendChild(b);
+  });
+}
+
+function vaelg(navn){
+  valgtFarve = navn;
+  visFarver();
+  const t = tekster[navn] || { ord: navn, tekst: '' };
+  const besked = $('besked');
+  besked.innerHTML = '';
+  const h = document.createElement('strong');
+  h.textContent = t.ord;
+  const p = document.createElement('div');
+  p.textContent = t.tekst;
+  besked.append(h, p);
+  besked.classList.remove('hidden');
+  $('valg').classList.remove('hidden');
+  $('status').textContent = '';
+  $('gemKnap').disabled = false;
+}
+
+async function gem(){
+  if(!valgtFarve) return;
+  const url = getSheetUrl();
+  if(!url){
+    $('status').textContent = 'Sæt Sheet-adressen i menuen (☰) for at gemme.';
+    return;
+  }
+  $('gemKnap').disabled = true;
+  $('status').textContent = 'Gemmer…';
+  try{
+    await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        sheet: 'Farvedag',
+        action: 'append',
+        row: { Dato: idag(), Farve: valgtFarve, Note: $('note').value.trim() }
+      })
+    });
+    $('status').textContent = 'Gemt ✓';
+    $('note').value = '';
+    hentHistorik();
+  }catch(e){
+    $('status').textContent = 'Det lykkedes ikke at gemme. Prøv igen.';
+    $('gemKnap').disabled = false;
+  }
+}
+
+async function hentHistorik(){
+  const liste = $('liste');
+  liste.innerHTML = '';
+  $('listeTom').classList.add('hidden');
+  const url = getSheetUrl();
+  if(!url) return;
+  try{
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'sheet=' + encodeURIComponent('Farvedag') + '&t=' + Date.now());
+    const rows = await r.json();
+    if(!Array.isArray(rows)) return;
+    const seneste = rows.slice(-7).reverse();
+    if(seneste.length === 0){ $('listeTom').classList.remove('hidden'); return; }
+    seneste.forEach(row=>{
+      const li = document.createElement('li');
+      const dato = String(row.Dato || '').slice(0,10);
+      const note = row.Note ? ': ' + row.Note : '';
+      li.textContent = dato + ' – ' + (row.Farve || '') + note;
+      liste.appendChild(li);
+    });
+  }catch(e){
+    $('listeTom').textContent = 'Kunne ikke hente historik.';
+    $('listeTom').classList.remove('hidden');
+  }
+}
+
+async function opdaterSheet(){
+  const url = getSheetUrl();
+  $('sheetStatus').textContent = url ? 'Henter fra Sheets…' : 'Ingen adresse sat. Tekster og gemning kræver den.';
+  await hentTekster();
+  visFarver();
+  if(url){
+    $('sheetStatus').textContent = 'Forbundet til Sheets';
+  }
+  hentHistorik();
+}
+
+$('gemKnap').addEventListener('click', gem);
+
+$('menuBtn').addEventListener('click', e=>{
+  e.stopPropagation();
+  $('menuPanel').classList.toggle('hidden');
+});
+document.addEventListener('click', e=>{
+  const panel = $('menuPanel');
+  if(!panel.classList.contains('hidden') && !panel.contains(e.target) && e.target !== $('menuBtn')){
+    panel.classList.add('hidden');
+  }
+});
+$('lukMenuBtn').addEventListener('click', ()=>$('menuPanel').classList.add('hidden'));
+$('sheetUrl').addEventListener('change', e=>{
+  setSheetUrl(e.target.value.trim());
+  opdaterSheet();
+});
+
+$('sheetUrl').value = getSheetUrl();
+opdaterSheet();
+</script>
+</body>
+</html>
